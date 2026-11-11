@@ -11,6 +11,8 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 SESC_CPF = os.environ.get("SESC_CPF")
 SESC_SENHA = os.environ.get("SESC_SENHA")
+GITHUB_TOKEN = os.environ.get("GH_TOKEN")
+GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY")
 
 def enviar_telegram(mensagem):
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
@@ -20,6 +22,20 @@ def enviar_telegram(mensagem):
             requests.post(url, data=payload, timeout=10)
         except Exception as e:
             print(f"Erro ao enviar mensagem no Telegram: {e}")
+
+def desativar_workflow_github():
+    """Trava o robô no GitHub Actions impedindo execuções futuras após o sucesso."""
+    if GITHUB_TOKEN and GITHUB_REPOSITORY:
+        url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/actions/workflows/autobooking.yml/disable"
+        headers = {
+            "Authorization": f"Bearer {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        res = requests.put(url, headers=headers)
+        if res.status_code == 204:
+            print("🔒 Workflow desativado com sucesso! O robô não efetuará novas reservas.")
+        else:
+            print(f"Erro ao tentar desativar workflow: {res.status_code} - {res.text}")
 
 chrome_options = Options()
 chrome_options.add_argument("--headless")
@@ -32,17 +48,17 @@ driver = webdriver.Chrome(options=chrome_options)
 wait = WebDriverWait(driver, 15)
 
 try:
-    print("Acessando o Portal do Sesc (TESTE DE LOGIN)...")
+    print("Acessando o Portal do Sesc...")
     driver.get("https://portalturismo.sescgo.com.br/")
 
-    # 1. Busca na data de teste (23/12/2026 a 24/12/2026)
+    # 1. Preenchimento dos Parâmetros de Busca (31/12/2026 a 03/01/2027)
     wait.until(EC.presence_of_element_located((By.ID, "search-unidade")))
     driver.find_element(By.ID, "search-unidade").send_keys("Caldas Novas")
     driver.find_element(By.ID, "search-criancas").send_keys("1")
     
     campo_datas = driver.find_element(By.NAME, "datas")
     campo_datas.clear()
-    campo_datas.send_keys("23/12/2026 - 24/12/2026")
+    campo_datas.send_keys("31/12/2026 - 03/01/2027")
     
     driver.find_element(By.NAME, "adultos").send_keys("2")
     driver.find_element(By.ID, "regime-pensao").send_keys("Pensão Completa")
@@ -55,14 +71,13 @@ try:
     body_text = driver.find_element(By.TAG_NAME, "body").text.lower()
     
     if "não existe disponibilidade" in body_text:
-        print("Nenhuma vaga encontrada nas datas de teste.")
-        enviar_telegram("⚠️ *TESTE:* Nenhuma vaga disponível no período de 23/12 a 24/12.")
+        print("Nenhuma vaga encontrada nesta verificação.")
     else:
-        print("🚨 Vaga encontrada! Iniciando login e retenção da vaga...")
-        enviar_telegram("🧪 *TESTE DE PRÉ-RESERVA EM ANDAMENTO!*\n📅 Período: 23/12/2026 a 24/12/2026\n🔑 Realizando login para vincular a vaga ao seu CPF...")
+        print("🚨 VAGA DETECTADA! Disparando notificação e iniciando auto-booking...")
+        enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 31/12/2026 a 03/01/2027\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
         
         try:
-            # 2. Clicar em Reservar
+            # 2. Clicar no Botão Reservar
             btn_reservar = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'set-disponibilidade-session')]")))
             driver.execute_script("arguments[0].click();", btn_reservar)
             
@@ -76,14 +91,29 @@ try:
             btn_entrar = driver.find_element(By.ID, "login-form-submit")
             driver.execute_script("arguments[0].click();", btn_entrar)
             
-            time.sleep(5)
+            # 4. Tela de Integrantes (Titular) -> Avançar para Pagamento
+            btn_efetuar_pgto = wait.until(EC.element_to_be_clickable((By.ID, "btn-efetuar-pgto")))
+            driver.execute_script("arguments[0].click();", btn_efetuar_pgto)
             
-            print("✅ Login realizado e vaga vinculada à sessão!")
-            enviar_telegram("✅ *TESTE DE LOGIN CONCLUÍDO COM SUCESSO!*\n\n🛒 A vaga de teste (23/12 a 24/12) foi vinculada à sua conta no Sesc.\n📲 Acesse o portal e verifique a tela de integrantes ou *MINHAS RESERVAS*.")
+            # 5. Aceite do Termo
+            chk_covid = wait.until(EC.presence_of_element_located((By.ID, "contrato-aceite-covid")))
+            if not chk_covid.is_selected():
+                driver.execute_script("arguments[0].click();", chk_covid)
+                
+            btn_aceitar = wait.until(EC.element_to_be_clickable((By.ID, "chk-aceitar-termo")))
+            driver.execute_script("arguments[0].click();", btn_aceitar)
             
+            time.sleep(5) # Garante a retenção no carrinho
+            
+            print("✅ Reserva retida no carrinho com sucesso!")
+            enviar_telegram("🛒 *RESERVA GARANTIDA NO SEU CARRINHO!*\n⏰ A vaga está presa no seu CPF. Acesse o site do Sesc agora para efetuar o pagamento e incluir sua acompanhante!\n\n🤖 *O robô foi DESATIVADO automaticamente para evitar novas reservas.*")
+            
+            # Trava automática do robô
+            desativar_workflow_github()
+
         except Exception as err_booking:
-            print(f"Falha no teste de login: {err_booking}")
-            enviar_telegram(f"⚠️ *FALHA NO TESTE DE LOGIN:* {err_booking}")
+            print(f"Falha durante a reserva automática: {err_booking}")
+            enviar_telegram("⚠️ *VAGA ENCONTRADA, mas o robô não conseguiu concluir a reserva automática.*\n🏃‍♂️ *Entre no site AGORA e tente reservar manualmente!\n\n🔄 O robô continuará ativo monitorando as próximas rodadas.*")
 
 finally:
     driver.quit()
