@@ -54,13 +54,17 @@ try:
     # 1. Preenchimento dos Parâmetros de Busca (31/12/2026 a 03/01/2027)
     wait.until(EC.presence_of_element_located((By.ID, "search-unidade")))
     driver.find_element(By.ID, "search-unidade").send_keys("Caldas Novas")
-    driver.find_element(By.ID, "search-criancas").send_keys("1")
+    
+    # Campo de crianças mantido intacto em "Selecionar"
     
     campo_datas = driver.find_element(By.NAME, "datas")
     campo_datas.clear()
     campo_datas.send_keys("31/12/2026 - 03/01/2027")
     
-    driver.find_element(By.NAME, "adultos").send_keys("2")
+    campo_adultos = driver.find_element(By.NAME, "adultos")
+    campo_adultos.clear()
+    campo_adultos.send_keys("2")
+    
     driver.find_element(By.ID, "regime-pensao").send_keys("Pensão Completa")
     
     btn_buscar = driver.find_element(By.ID, "search-submit")
