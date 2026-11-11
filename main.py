@@ -61,10 +61,7 @@ try:
     campo_datas.clear()
     campo_datas.send_keys("31/12/2026 - 03/01/2027")
     
-    campo_adultos = driver.find_element(By.NAME, "adultos")
-    campo_adultos.clear()
-    campo_adultos.send_keys("2")
-    
+    driver.find_element(By.NAME, "adultos").send_keys("2")
     driver.find_element(By.ID, "regime-pensao").send_keys("Pensão Completa")
     
     btn_buscar = driver.find_element(By.ID, "search-submit")
