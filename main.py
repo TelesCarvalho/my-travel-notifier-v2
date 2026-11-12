@@ -52,6 +52,11 @@ def desativar_workflow_github():
         else:
             print(f"Erro ao tentar desativar workflow: {res.status_code} - {res.text}")
 
+def tem_botao_reservar_visivel(driver):
+    """Retorna True apenas se existir um botão Reservar realmente visível na tela."""
+    botoes = driver.find_elements(By.XPATH, "//a[contains(@class, 'set-disponibilidade-session')]")
+    return any(b.is_displayed() for b in botoes)
+
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
@@ -80,18 +85,19 @@ try:
     btn_buscar = driver.find_element(By.ID, "search-submit")
     driver.execute_script("arguments[0].click();", btn_buscar)
     
-    # Aguarda até 20s o site responder com o botão de reservar OU a mensagem de indisponível
-    WebDriverWait(driver, 20).until(
+    # Aguarda até 25s pela resposta real: aviso de indisponibilidade OU botão Reservar visível
+    WebDriverWait(driver, 25).until(
         lambda d: "não existe disponibilidade" in d.find_element(By.TAG_NAME, "body").text.lower()
-        or len(d.find_elements(By.XPATH, "//a[contains(@class, 'set-disponibilidade-session')]")) > 0
+        or tem_botao_reservar_visivel(d)
     )
     
     body_text = driver.find_element(By.TAG_NAME, "body").text.lower()
+    sem_vaga = ("não existe disponibilidade" in body_text) or ("outras datas próximas" in body_text)
     
-    if "não existe disponibilidade" in body_text:
-        print("Nenhuma vaga encontrada nesta verificação.")
+    if sem_vaga or not tem_botao_reservar_visivel(driver):
+        print("Nenhuma vaga encontrada para 31/12/2026 - 03/01/2027 nesta verificação.")
     else:
-        print("🚨 VAGA DETECTADA! Disparando notificação e iniciando auto-booking...")
+        print("🚨 VAGA REAL DETECTADA! Disparando notificação e iniciando auto-booking...")
         enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 31/12/2026 a 03/01/2027\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
         
         etapa = "Iniciando checkout"
