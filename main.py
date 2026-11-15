@@ -77,7 +77,7 @@ try:
     
     campo_datas = driver.find_element(By.NAME, "datas")
     campo_datas.clear()
-    campo_datas.send_keys("20/12/2026 - 22/12/2026")
+    campo_datas.send_keys("18/12/2026 - 20/12/2026")
     
     driver.find_element(By.NAME, "adultos").send_keys("2")
     driver.find_element(By.ID, "regime-pensao").send_keys("Pensão Completa")
@@ -98,7 +98,7 @@ try:
         print("Nenhuma vaga encontrada para 31/12/2026 - 03/01/2027 nesta verificação.")
     else:
         print("🚨 VAGA REAL DETECTADA! Disparando notificação e iniciando auto-booking...")
-        enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 20/12/2026 a 22/12/2026\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
+        enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 18/12/2026 a 20/12/2026\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
         
         etapa = "Iniciando checkout"
         try:
