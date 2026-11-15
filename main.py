@@ -77,7 +77,7 @@ try:
     
     campo_datas = driver.find_element(By.NAME, "datas")
     campo_datas.clear()
-    campo_datas.send_keys("18/12/2026 - 20/12/2026")
+    campo_datas.send_keys("31/12/2026 - 03/01/2027")
     
     driver.find_element(By.NAME, "adultos").send_keys("2")
     driver.find_element(By.ID, "regime-pensao").send_keys("Pensão Completa")
@@ -98,7 +98,7 @@ try:
         print("Nenhuma vaga encontrada para 31/12/2026 - 03/01/2027 nesta verificação.")
     else:
         print("🚨 VAGA REAL DETECTADA! Disparando notificação e iniciando auto-booking...")
-        enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 18/12/2026 a 20/12/2026\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
+        enviar_telegram("🚨 *VAGA ENCONTRADA NO SESC!*\n📅 Período: 31/12/2026 a 03/01/2027\n🤖 *Iniciando tentativa de reserva automática no seu CPF...*")
         
         etapa = "Iniciando checkout"
         try:
@@ -118,24 +118,24 @@ try:
             driver.execute_script("arguments[0].click();", btn_entrar)
             
             etapa = "4. Clicar em Avançar para Pagamento (btn-efetuar-pgto)"
-            #btn_efetuar_pgto = wait.until(EC.element_to_be_clickable((By.ID, "btn-efetuar-pgto")))
-            #driver.execute_script("arguments[0].click();", btn_efetuar_pgto)
+            btn_efetuar_pgto = wait.until(EC.element_to_be_clickable((By.ID, "btn-efetuar-pgto")))
+            driver.execute_script("arguments[0].click();", btn_efetuar_pgto)
             
-            #etapa = "5. Marcar aceite do termo (contrato-aceite-covid)"
-            #chk_covid = wait.until(EC.presence_of_element_located((By.ID, "contrato-aceite-covid")))
-            #if not chk_covid.is_selected():
-                #driver.execute_script("arguments[0].click();", chk_covid)
+            etapa = "5. Marcar aceite do termo (contrato-aceite-covid)"
+            chk_covid = wait.until(EC.presence_of_element_located((By.ID, "contrato-aceite-covid")))
+            if not chk_covid.is_selected():
+                driver.execute_script("arguments[0].click();", chk_covid)
                 
-            #etapa = "6. Confirmar termo (chk-aceitar-termo)"
-            #btn_aceitar = wait.until(EC.element_to_be_clickable((By.ID, "chk-aceitar-termo")))
-            #driver.execute_script("arguments[0].click();", btn_aceitar)
+            etapa = "6. Confirmar termo (chk-aceitar-termo)"
+            btn_aceitar = wait.until(EC.element_to_be_clickable((By.ID, "chk-aceitar-termo")))
+            driver.execute_script("arguments[0].click();", btn_aceitar)
             
             time.sleep(5) # Garante a retenção no carrinho
             
-            #print("✅ Reserva retida no carrinho com sucesso!")
-            #enviar_telegram("🛒 *RESERVA GARANTIDA NO SEU CARRINHO!*\n⏰ A vaga está presa no seu CPF. Acesse o site do Sesc agora para efetuar o pagamento e incluir sua acompanhante!\n\n🤖 *O robô foi DESATIVADO automaticamente para evitar novas reservas.*")
+            print("✅ Reserva retida no carrinho com sucesso!")
+            enviar_telegram("🛒 *RESERVA GARANTIDA NO SEU CARRINHO!*\n⏰ A vaga está presa no seu CPF. Acesse o site do Sesc agora para efetuar o pagamento e incluir sua acompanhante!\n\n🤖 *O robô foi DESATIVADO automaticamente para evitar novas reservas.*")
             
-            #desativar_workflow_github()
+            desativar_workflow_github()
 
         except Exception as err_booking:
             tipo_erro = type(err_booking).__name__
