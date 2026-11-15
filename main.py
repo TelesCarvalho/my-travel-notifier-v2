@@ -117,7 +117,7 @@ try:
             btn_entrar = driver.find_element(By.ID, "login-form-submit")
             driver.execute_script("arguments[0].click();", btn_entrar)
             
-            #etapa = "4. Clicar em Avançar para Pagamento (btn-efetuar-pgto)"
+            etapa = "4. Clicar em Avançar para Pagamento (btn-efetuar-pgto)"
             #btn_efetuar_pgto = wait.until(EC.element_to_be_clickable((By.ID, "btn-efetuar-pgto")))
             #driver.execute_script("arguments[0].click();", btn_efetuar_pgto)
             
